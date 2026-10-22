@@ -14,7 +14,8 @@ Verifica os controles de hardening do Mac, compara o resultado com uma política
 
 🎓 *Projeto acadêmico de Segurança da Informação*
 
-<img width="1415" height="680" alt="Pasted Graphic 2" src="https://github.com/user-attachments/assets/fce17703-b493-4c4f-8144-4e06181dc78b" />
+![Uploading image.png…]()
+
 
 
 </div>
