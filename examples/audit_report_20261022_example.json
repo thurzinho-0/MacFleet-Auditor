@@ -1,0 +1,391 @@
+{
+  "schema_version": "1.0",
+  "metadata": {
+    "tool": "MacFleet Auditor",
+    "tool_version": "1.0.0",
+    "run_id": "719b1c50-91ea-4ccd-b209-b03d1079421b",
+    "started_at": "2026-10-22T16:19:56-03:00",
+    "finished_at": "2026-10-22T16:20:40-03:00",
+    "duration_seconds": 43.87,
+    "hostname": "MacBook-Air-de-Arthur.local",
+    "executed_by": "arthur",
+    "sudo_user": null,
+    "running_as_root": false,
+    "python_version": "3.9.6",
+    "platform": "macOS-26.0-arm64-arm-64bit",
+    "options": {
+      "updates_mode": "live",
+      "policy_file": null
+    }
+  },
+  "policy": {
+    "name": "MacFleet Baseline",
+    "version": "1.0.0",
+    "description": "Baseline mínima de hardening e saúde operacional para endpoints macOS corporativos."
+  },
+  "summary": {
+    "overall_status": "NON_COMPLIANT",
+    "total_rules": 10,
+    "passed": 5,
+    "warnings": 4,
+    "failed": 1,
+    "skipped": 0,
+    "compliance_score": 50.0,
+    "weighted_score": 79.2,
+    "critical_failures": []
+  },
+  "compliance_results": [
+    {
+      "id": "SEC-001",
+      "title": "Criptografia de disco (FileVault)",
+      "category": "Security Hardening",
+      "severity": "critical",
+      "status": "PASS",
+      "expected": "FileVault ativo (On)",
+      "actual": "on",
+      "message": "Estado 'on' conforme.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure FileVault Is Enabled",
+        "NIST mSCP: system_settings_filevault_enforce"
+      ],
+      "data_path": "security.filevault.state"
+    },
+    {
+      "id": "SEC-002",
+      "title": "Application Firewall ativo",
+      "category": "Security Hardening",
+      "severity": "high",
+      "status": "PASS",
+      "expected": "Firewall habilitado (State = 1 ou 2)",
+      "actual": true,
+      "message": "Controle ativo.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure Firewall Is Enabled",
+        "NIST mSCP: system_settings_firewall_enable"
+      ],
+      "data_path": "security.firewall.enabled"
+    },
+    {
+      "id": "SEC-003",
+      "title": "Firewall em Stealth Mode",
+      "category": "Security Hardening",
+      "severity": "low",
+      "status": "WARNING",
+      "expected": "Stealth mode habilitado",
+      "actual": false,
+      "message": "Stealth mode desativado (responde a ICMP/probes).",
+      "remediation": "sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on",
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure Firewall Stealth Mode Is Enabled",
+        "NIST mSCP: system_settings_firewall_stealth_mode_enable"
+      ],
+      "data_path": "security.firewall.stealth_mode"
+    },
+    {
+      "id": "SEC-004",
+      "title": "Gatekeeper ativo",
+      "category": "Security Hardening",
+      "severity": "high",
+      "status": "PASS",
+      "expected": "assessments enabled",
+      "actual": true,
+      "message": "Controle ativo.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure Gatekeeper Is Enabled",
+        "NIST mSCP: os_gatekeeper_enable"
+      ],
+      "data_path": "security.gatekeeper.enabled"
+    },
+    {
+      "id": "SEC-005",
+      "title": "System Integrity Protection (SIP)",
+      "category": "Security Hardening",
+      "severity": "critical",
+      "status": "PASS",
+      "expected": "SIP enabled",
+      "actual": "enabled",
+      "message": "Estado 'enabled' conforme.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure System Integrity Protection Is Enabled",
+        "NIST mSCP: os_sip_enable"
+      ],
+      "data_path": "security.sip.state"
+    },
+    {
+      "id": "SEC-006",
+      "title": "Atualizações de segurança pendentes",
+      "category": "Patch Management",
+      "severity": "high",
+      "status": "FAIL",
+      "expected": "0 atualizações de segurança pendentes",
+      "actual": 1,
+      "message": "1 pendente(s) — acima do máximo permitido (0).",
+      "remediation": "sudo softwareupdate --install --all --restart (ou enforcement via Declarative Device Management no MDM)",
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure All Apple-provided Software Is Current"
+      ],
+      "data_path": "security.software_updates.pending_security"
+    },
+    {
+      "id": "SEC-007",
+      "title": "Atualizações pendentes (todas)",
+      "category": "Patch Management",
+      "severity": "medium",
+      "status": "WARNING",
+      "expected": "Nenhuma atualização pendente",
+      "actual": 2,
+      "message": "2 pendente(s) — acima do máximo permitido (0).",
+      "remediation": "Revisar `softwareupdate --list` e agendar janela de manutenção.",
+      "references": [],
+      "data_path": "security.software_updates.pending_total"
+    },
+    {
+      "id": "OPS-001",
+      "title": "Espaço livre no volume principal",
+      "category": "Operational Health",
+      "severity": "medium",
+      "status": "WARNING",
+      "expected": "> 15% livre",
+      "actual": 12.48,
+      "message": "12.48% — abaixo do ideal (> 15.0%).",
+      "remediation": "Liberar espaço (caches, Downloads, snapshots locais: tmutil listlocalsnapshots /). Pouco espaço impede instalação de updates do macOS.",
+      "references": [],
+      "data_path": "system.storage.free_percent"
+    },
+    {
+      "id": "OPS-002",
+      "title": "Versão mínima suportada do macOS",
+      "category": "Operational Health",
+      "severity": "medium",
+      "status": "PASS",
+      "expected": ">= 15.0",
+      "actual": "26.0",
+      "message": "Versão 26.0 >= 15.0.",
+      "remediation": null,
+      "references": [],
+      "data_path": "system.os.product_version"
+    },
+    {
+      "id": "IAM-001",
+      "title": "Usuário sem privilégio de Administrador",
+      "category": "Identity & Access",
+      "severity": "medium",
+      "status": "WARNING",
+      "expected": "Usuário padrão (fora do grupo admin)",
+      "actual": true,
+      "message": "Usuário é membro do grupo admin.",
+      "remediation": "Aplicar menor privilégio: remover do grupo admin (sudo dseditgroup -o edit -d <usuario> -t user admin) e usar elevação just-in-time.",
+      "references": [
+        "CIS Controls v8 — 5.4 Restrict Administrator Privileges"
+      ],
+      "data_path": "system.user.is_admin"
+    }
+  ],
+  "collected_data": {
+    "system": {
+      "device": {
+        "collection_status": "ok",
+        "computer_name": "MacBook Air de Arthur",
+        "local_hostname": "MacBook-Air-de-Arthur",
+        "hostname": "MacBook-Air-de-Arthur.local",
+        "model_name": "MacBook Air",
+        "model_identifier": "Mac14,2",
+        "model_number": "Z15S000XXBZ/A",
+        "serial_number": "EXAMPLE0SN01",
+        "hardware_uuid": "00000000-0000-0000-0000-EXAMPLE00001",
+        "chip": "Apple M2",
+        "cpu_cores": "proc 8:4:4",
+        "memory": "16 GB",
+        "firmware_version": "13822.1.2",
+        "activation_lock_status": "activation_lock_disabled",
+        "evidence": [
+          {
+            "command": "/usr/sbin/system_profiler SPHardwareDataType -json",
+            "returncode": 0,
+            "output": "[JSON omitido da evidência — campos extraídos abaixo]",
+            "error": null,
+            "duration_ms": 650
+          }
+        ]
+      },
+      "os": {
+        "collection_status": "ok",
+        "product_name": "macOS",
+        "product_version": "26.0",
+        "product_version_extra": null,
+        "build_version": "25A354",
+        "full_version": "26.0",
+        "kernel_version": "25.0.0",
+        "architecture": "arm64",
+        "source": "sw_vers",
+        "evidence": [
+          {
+            "command": "/usr/bin/sw_vers",
+            "returncode": 0,
+            "output": "ProductName:\t\tmacOS\nProductVersion:\t\t26.0\nBuildVersion:\t\t25A354",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "storage": {
+        "collection_status": "ok",
+        "path": "/",
+        "device": "/dev/disk3s1s1",
+        "total_bytes": 245107195904,
+        "used_bytes": 214510075904,
+        "free_bytes": 30597120000,
+        "total_gb": 245.11,
+        "used_gb": 214.51,
+        "free_gb": 30.6,
+        "used_percent": 87.52,
+        "free_percent": 12.48,
+        "evidence": [
+          {
+            "command": "/bin/df -Pk /",
+            "returncode": 0,
+            "output": "Filesystem     1024-blocks      Used Available Capacity  Mounted on\n/dev/disk3s1s1   239362496  11180000  29880000    28%    /",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "user": {
+        "collection_status": "ok",
+        "username": "arthur",
+        "uid": 501,
+        "resolved_from": "process_user",
+        "is_admin": true,
+        "check_method": "dseditgroup",
+        "admin_group_members": [
+          "arthur",
+          "itadmin",
+          "root"
+        ],
+        "audit_running_as_root": false,
+        "evidence": [
+          {
+            "command": "/usr/sbin/dseditgroup -o checkmember -m arthur admin",
+            "returncode": 0,
+            "output": "yes arthur is a member of admin",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "uptime": {
+        "collection_status": "ok",
+        "boot_time": "2026-10-16T06:43:56-03:00",
+        "uptime_seconds": 552960,
+        "uptime_days": 6.4
+      }
+    },
+    "security": {
+      "filevault": {
+        "collection_status": "ok",
+        "state": "on",
+        "enabled": true,
+        "deferred_enablement_pending": false,
+        "progress_percent": null,
+        "evidence": [
+          {
+            "command": "/usr/bin/fdesetup status",
+            "returncode": 0,
+            "output": "FileVault is On.",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "firewall": {
+        "collection_status": "ok",
+        "enabled": true,
+        "state": "on",
+        "state_code": 1,
+        "stealth_mode": false,
+        "source": "socketfilterfw",
+        "evidence": [
+          {
+            "command": "/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate",
+            "returncode": 0,
+            "output": "Firewall is enabled. (State = 1)",
+            "error": null,
+            "duration_ms": 12
+          },
+          {
+            "command": "/usr/libexec/ApplicationFirewall/socketfilterfw --getstealthmode",
+            "returncode": 0,
+            "output": "Firewall stealth mode is off",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "gatekeeper": {
+        "collection_status": "ok",
+        "enabled": true,
+        "evidence": [
+          {
+            "command": "/usr/sbin/spctl --status",
+            "returncode": 0,
+            "output": "assessments enabled",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "sip": {
+        "collection_status": "ok",
+        "state": "enabled",
+        "enabled": true,
+        "evidence": [
+          {
+            "command": "/usr/bin/csrutil status",
+            "returncode": 0,
+            "output": "System Integrity Protection status: enabled.",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "software_updates": {
+        "collection_status": "ok",
+        "pending_total": 2,
+        "pending_security": 1,
+        "restart_required": true,
+        "updates": [
+          {
+            "label": "macOS Tahoe 26.0.1-25A362",
+            "title": "macOS Tahoe 26.0.1",
+            "version": "26.0.1",
+            "recommended": true,
+            "restart_required": true,
+            "is_security": true
+          },
+          {
+            "label": "Command Line Tools for Xcode 26.0-26.0",
+            "title": "Command Line Tools for Xcode 26.0",
+            "version": "26.0",
+            "recommended": true,
+            "restart_required": false,
+            "is_security": false
+          }
+        ],
+        "source": "softwareupdate",
+        "evidence": [
+          {
+            "command": "/usr/sbin/softwareupdate --list --include-config-data",
+            "returncode": 0,
+            "output": "Software Update Tool\n\nFinding available software\nSoftware Update found the following new or updated software:\n* Label: macOS Tahoe 26.0.1-25A362\n\tTitle: macOS Tahoe 26.0.1, Version: 26.0.1, Size: 2214311KiB, Recommended: YES, Action: restart,\n* Label: Command Line Tools for Xcode 26.0-26.0\n\tTitle: Command Line Tools for Xcode 26.0, Version: 26.0, Size: 912345KiB, Recommended: YES,",
+            "error": null,
+            "duration_ms": 41000
+          }
+        ]
+      }
+    }
+  }
+}

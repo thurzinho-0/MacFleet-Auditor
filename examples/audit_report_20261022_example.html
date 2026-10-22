@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MacFleet Auditor — Dashboard</title>
+<style>
+:root {
+  --outer: #7ccba2;
+  --panel: #e9edf2;
+  --card: #ffffff;
+  --tile-gray: #eceef3;
+  --tile-green: #e2f4e9;
+  --tile-blue: #cfdaf6;
+  --ink: #15171c;
+  --ink-2: #4a5060;
+  --muted: #8a90a0;
+  --line: #e3e6ec;
+  --accent: #6cc495;
+  --accent-soft: #c9ecd8;
+  --black: #121316;
+  --on-black: #ffffff;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --skip: #9aa0ad;
+  --good-bg: #e3f5e3;
+  --warning-bg: #fff3d6;
+  --critical-bg: #fbe4e4;
+  --skip-bg: #eef0f3;
+  --shadow: 0 20px 50px rgba(20, 60, 40, .18);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --outer: #0e1813; --panel: #171a20; --card: #1f232b; --tile-gray: #272b34;
+    --tile-green: #1d3427; --tile-blue: #232d47; --ink: #eef0f4; --ink-2: #b9bfcc;
+    --muted: #8a91a1; --line: #2e333d; --accent: #5fbf8b; --accent-soft: #24412f;
+    --black: #eef0f4; --on-black: #121316; --good-bg: #173a1c; --warning-bg: #3d3214;
+    --critical-bg: #421d1f; --skip-bg: #2a2e36; --shadow: 0 20px 50px rgba(0,0,0,.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --outer: #0e1813; --panel: #171a20; --card: #1f232b; --tile-gray: #272b34;
+  --tile-green: #1d3427; --tile-blue: #232d47; --ink: #eef0f4; --ink-2: #b9bfcc;
+  --muted: #8a91a1; --line: #2e333d; --accent: #5fbf8b; --accent-soft: #24412f;
+  --black: #eef0f4; --on-black: #121316; --good-bg: #173a1c; --warning-bg: #3d3214;
+  --critical-bg: #421d1f; --skip-bg: #2a2e36; --shadow: 0 20px 50px rgba(0,0,0,.45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--outer);
+  color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  padding: 40px 32px;
+  min-height: 100vh;
+}
+button, input { font: inherit; color: inherit; }
+.panel {
+  max-width: 1360px; margin: 0 auto;
+  background: var(--panel);
+  border-radius: 36px;
+  box-shadow: var(--shadow);
+  padding: 26px 28px 30px;
+}
+
+/* ------------------------------------------------------------ top bar */
+.topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.brand { display: flex; flex-direction: column; min-width: 200px; }
+.brand b { font-size: 16px; letter-spacing: -.01em; }
+.brand span { color: var(--muted); font-size: 12px; }
+.nav {
+  margin: 0 auto; display: flex; gap: 4px; background: var(--card);
+  border-radius: 999px; padding: 5px; overflow-x: auto; max-width: 100%;
+}
+.nav button {
+  border: 0; background: transparent; padding: 7px 16px; border-radius: 999px;
+  cursor: pointer; white-space: nowrap; font-size: 13px; color: var(--ink-2);
+}
+.nav button[aria-pressed="true"] { background: var(--tile-gray); color: var(--ink); font-weight: 600; }
+.nav button:hover { color: var(--ink); }
+.top-actions { display: flex; gap: 10px; align-items: center; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--card);
+  display: grid; place-items: center; cursor: pointer;
+}
+.pill-black {
+  display: inline-flex; align-items: center; gap: 8px; border: 0; cursor: pointer;
+  background: var(--black); color: var(--on-black); padding: 10px 16px; border-radius: 999px;
+  font-weight: 600; font-size: 13px;
+}
+.pill-black svg { stroke: var(--on-black); }
+
+/* ------------------------------------------------------------ layout */
+.layout { display: grid; grid-template-columns: 56px 1fr; gap: 20px; }
+.sidebar {
+  background: var(--card); border-radius: 999px; padding: 14px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  position: sticky; top: 20px; height: fit-content; min-height: 420px;
+}
+.sidebar a, .sidebar button {
+  width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center;
+  color: var(--ink-2); border: 0; background: transparent; cursor: pointer;
+}
+.sidebar a:hover, .sidebar button:hover, .sidebar a.active { background: var(--tile-gray); color: var(--ink); }
+.sidebar .spacer { flex: 1; }
+svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
+.main-col, .side-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.card { background: var(--card); border-radius: var(--radius-xl); padding: 22px; min-width: 0; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.card-head h2 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+.card-head .sub { color: var(--muted); font-size: 12px; }
+
+/* ------------------------------------------------------------ KPI tiles */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.tile { border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 12px; min-height: 196px; }
+.tile.gray { background: var(--tile-gray); }
+.tile.green { background: var(--tile-green); }
+.tile.blue { background: var(--tile-blue); }
+.tile-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.tile-title { font-weight: 600; font-size: 14px; }
+.shield { width: 32px; height: 32px; border-radius: 50%; background: var(--card); display: grid; place-items: center; flex: none; }
+.hero { display: flex; align-items: baseline; gap: 8px; }
+.hero .num { font-size: 44px; font-weight: 600; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.hero .unit { font-size: 14px; color: var(--ink-2); }
+.hero-word { font-size: 24px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
+.segbar { display: flex; gap: 2px; height: 6px; border-radius: 4px; overflow: hidden; background: transparent; }
+.segbar span { display: block; height: 100%; border-radius: 4px; }
+.tile-foot { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-2); }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--ink-2); }
+.delta-bad { color: var(--critical); font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.delta-bad::before { content: ""; border: 6px solid transparent; border-top: 8px solid var(--critical); border-bottom: 0; }
+
+/* ------------------------------------------------------------ status badge */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 6px;
+  border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap;
+}
+.badge svg { width: 14px; height: 14px; }
+.badge.PASS { background: var(--good-bg); } .badge.PASS svg { color: var(--good); }
+.badge.WARNING { background: var(--warning-bg); } .badge.WARNING svg { color: #c98a00; }
+.badge.FAIL { background: var(--critical-bg); } .badge.FAIL svg { color: var(--critical); }
+.badge.SKIPPED { background: var(--skip-bg); } .badge.SKIPPED svg { color: var(--skip); }
+
+/* ------------------------------------------------------------ row 2 */
+.row2 { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+.cat-rows { display: flex; flex-direction: column; gap: 16px; margin-top: 6px; }
+.cat-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 54px; gap: 14px; align-items: center; }
+.cat-row .label { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-row .pct { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 13px; }
+.stack { display: flex; gap: 2px; height: 26px; }
+.stack span {
+  height: 100%; border-radius: 4px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 600; color: #fff; cursor: default; min-width: 4px;
+  transition: filter .15s;
+}
+.stack span:hover { filter: brightness(1.08); }
+.stack span.WARNING { color: #2a2000; }
+
+.storage-big { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 14px; }
+.storage-big .num { font-size: 32px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cap { position: relative; height: 120px; display: flex; align-items: flex-end; gap: 14px; padding-top: 6px; }
+.cap-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.cap-col .bar { width: 100%; max-width: 46px; border-radius: 6px 6px 4px 4px; cursor: default; }
+.cap-col small { color: var(--muted); font-size: 11px; }
+.capline { position: relative; height: 12px; background: var(--tile-gray); border-radius: 6px; margin: 18px 0 26px; }
+.capline .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--accent); }
+.capline .mark { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--ink); opacity: .55; }
+.capline .mark em { position: absolute; top: 24px; font-style: normal; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.capline .mark.l em { right: 6px; }
+.capline .mark.r em { left: 6px; }
+.prio { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 14px; }
+.prio h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.prio-item { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; font-size: 13px; cursor: pointer; }
+.prio-item:hover b { text-decoration: underline; }
+.prio-item div { min-width: 0; }
+.prio-item small { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.foot-pills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pill-accent { background: var(--accent); color: #0b2216; border-radius: 999px; padding: 4px 12px; font-weight: 600; font-size: 12px; }
+.pill-outline { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--ink-2); }
+
+/* ------------------------------------------------------------ side column */
+.profile { text-align: center; }
+.ring-wrap { position: relative; width: 132px; height: 132px; margin: 4px auto 12px; }
+.ring-wrap svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ring-inner {
+  position: absolute; inset: 14px; border-radius: 50%; background: var(--tile-gray);
+  display: grid; place-items: center;
+}
+.ring-inner svg { position: static; transform: none; width: 48px; height: 48px; stroke-width: 1.4; color: var(--ink-2); }
+.profile h3 { margin: 0; font-size: 16px; }
+.profile .model { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.facts { margin: 16px 0 6px; display: grid; gap: 8px; text-align: left; }
+.facts div { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; border-bottom: 1px dashed var(--line); padding-bottom: 6px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.btn-soft {
+  border: 0; background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 7px 14px;
+  font-weight: 600; font-size: 12px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; margin-top: 8px;
+}
+
+.donut-wrap { position: relative; width: 190px; height: 190px; margin: 6px auto 12px; }
+.donut-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut-wrap circle.seg { cursor: default; transition: stroke-width .15s; }
+.donut-wrap circle.seg:hover { stroke-width: 26; }
+.donut-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
+.donut-center b { font-size: 34px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.donut-center span { font-size: 12px; color: var(--ink-2); }
+.legend.center { justify-content: center; }
+
+/* ------------------------------------------------------------ table */
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filter {
+  border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px;
+  font-size: 12px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center;
+}
+.filter[aria-pressed="true"] { background: var(--black); color: var(--on-black); border-color: var(--black); }
+.filter .n { opacity: .7; font-variant-numeric: tabular-nums; }
+.search {
+  border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px;
+  font-size: 12px; min-width: 180px; outline: none;
+}
+.search:focus { border-color: var(--accent); }
+.table-wrap { overflow-x: auto; margin: 0 -6px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr.row { cursor: pointer; }
+tr.row:hover td { background: color-mix(in srgb, var(--tile-gray) 55%, transparent); }
+td.id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+td.title b { font-weight: 600; display: block; }
+td.title small { color: var(--muted); }
+.sev { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.sev i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; background: var(--ink-2); }
+.sev.critical i { background: var(--ink); } .sev.high i { opacity: .75; } .sev.medium i { opacity: .5; } .sev.low i { opacity: .25; }
+td.msg { color: var(--ink-2); min-width: 220px; }
+.chev { transition: transform .15s; color: var(--muted); }
+tr.open .chev { transform: rotate(90deg); }
+tr.detail td { background: var(--tile-gray); padding: 16px 18px; }
+tr.detail[hidden] { display: none; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 24px; }
+.detail-grid h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.detail-grid p { margin: 0; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+pre { background: var(--card); border-radius: 10px; padding: 10px 12px; margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; }
+.empty { text-align: center; color: var(--muted); padding: 24px; }
+
+/* ------------------------------------------------------------ row 4 */
+.row4 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.upd { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.upd:last-child { border-bottom: 0; }
+.upd .ico { width: 34px; height: 34px; border-radius: 10px; background: var(--tile-blue); display: grid; place-items: center; flex: none; }
+.upd .t { flex: 1; min-width: 0; }
+.upd .t b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upd .t small { color: var(--muted); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; font-size: 12px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------ tooltip / drop */
+#tip {
+  position: fixed; z-index: 50; pointer-events: none; background: var(--black); color: var(--on-black);
+  padding: 8px 10px; border-radius: 10px; font-size: 12px; line-height: 1.35; max-width: 260px;
+  opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+#tip.on { opacity: 1; transform: none; }
+#tip b { font-weight: 650; }
+#drop {
+  position: fixed; inset: 0; background: color-mix(in srgb, var(--outer) 85%, transparent);
+  display: none; place-items: center; z-index: 60; font-size: 20px; font-weight: 600; color: #0b2216;
+}
+#drop.on { display: grid; }
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--black); color: var(--on-black); padding: 10px 16px; border-radius: 999px; font-size: 13px; z-index: 70; display: none; }
+.toast.on { display: block; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ------------------------------------------------------------ responsive */
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: 1fr; }
+  .side-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+}
+@media (max-width: 900px) {
+  .tiles { grid-template-columns: 1fr; }
+  .row2, .row4 { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  body { padding: 16px; }
+  .panel { padding: 18px 16px; border-radius: 26px; }
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .nav { margin: 0; order: 3; width: 100%; }
+  #catRows .cat-row { grid-template-columns: minmax(0, 1fr) 44px; gap: 6px 10px; }
+  #catRows .cat-row .label { grid-column: 1 / -1; }
+  .card { padding: 18px; }
+}
+@media print {
+  body { background: #fff; padding: 0; }
+  .panel { box-shadow: none; }
+  .sidebar, .top-actions, .nav { display: none; }
+  .layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="panel">
+  <header class="topbar">
+    <div class="brand">
+      <b>MacFleet Auditor</b>
+      <span id="brandSub">Relatório de auditoria</span>
+    </div>
+    <nav class="nav" id="nav" aria-label="Filtrar por categoria">
+      <button data-cat="" aria-pressed="true">Visão geral</button>
+    </nav>
+    <div class="top-actions">
+      <button class="icon-btn" id="themeBtn" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <svg class="i" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <label class="pill-black" title="Abrir outro audit_report_*.json (ou arraste o arquivo para a página)">
+        <svg class="i" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        Carregar relatório
+        <input type="file" id="fileInput" accept=".json,application/json" class="sr">
+      </label>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Seções">
+      <a href="#overview" class="active" title="Visão geral"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></a>
+      <a href="#categories" title="Resultado por categoria"><svg class="i" viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M7 15l4-4 3 3 5-6"/></svg></a>
+      <a href="#controls" title="Controles"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></a>
+      <a href="#updates" title="Atualizações"><svg class="i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></a>
+      <a href="#meta" title="Metadados da execução"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></a>
+      <div class="spacer"></div>
+      <button id="printBtn" title="Imprimir / salvar PDF" aria-label="Imprimir"><svg class="i" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></button>
+    </aside>
+
+    <main class="grid">
+      <div class="main-col">
+        <!-- KPI tiles -->
+        <section class="card" id="overview">
+          <div class="tiles">
+            <article class="tile gray">
+              <div class="tile-top"><div class="tile-title">Status geral<br><span id="policyName" style="font-weight:400;color:var(--muted);font-size:12px"></span></div>
+                <div class="shield"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div></div>
+              <div class="hero-word" id="overallWord">—</div>
+              <div class="segbar" id="overallBar" aria-hidden="true"></div>
+              <div style="font-size:13px;font-weight:600" id="overallLine"></div>
+              <div class="tile-foot" id="overallFoot"></div>
+            </article>
+            <article class="tile green">
+              <div class="tile-top"><div class="tile-title">Score de conformidade</div>
+                <div class="shield"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div></div>
+              <div class="hero"><span class="num" id="scoreNum">—</span><span class="unit">% aprovados</span></div>
+              <div class="segbar"><span id="scoreBar" style="background:var(--accent)"></span><span id="scoreRest" style="background:var(--card)"></span></div>
+              <div style="font-size:13px;font-weight:600">Ponderado por severidade: <span id="weighted">—</span>%</div>
+              <div class="tile-foot" id="scoreFoot"></div>
+            </article>
+            <article class="tile blue">
+              <div class="tile-top"><div class="tile-title">Atualizações pendentes</div>
+                <div class="shield"><svg class="i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></div></div>
+              <div class="hero"><span class="num" id="updNum">—</span><span class="unit" id="updUnit">updates</span></div>
+              <div style="font-size:13px;font-weight:600" id="updSec"></div>
+              <div class="tile-foot" id="updFoot"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- categories + storage -->
+        <div class="row2">
+          <section class="card" id="categories">
+            <div class="card-head">
+              <h2>Resultado por categoria</h2>
+              <div class="legend" id="catLegend"></div>
+            </div>
+            <div class="cat-rows" id="catRows"></div>
+            <div class="prio" id="prio"></div>
+          </section>
+          <section class="card" id="storage">
+            <div class="card-head"><h2>Armazenamento <span class="sub" id="storageDev"></span></h2>
+              <span class="pill-accent" id="storageStatus">—</span></div>
+            <div class="storage-big"><span class="num" id="freeGb">—</span><span class="sub">GB livres</span></div>
+            <div class="cap" id="capCols"></div>
+            <div class="capline" id="capLine" role="img"></div>
+            <div class="foot-pills" id="storageFoot"></div>
+          </section>
+        </div>
+
+        <!-- controls table -->
+        <section class="card" id="controls">
+          <div class="card-head">
+            <h2>Controles de conformidade <span class="sub" id="ctrlCount"></span></h2>
+            <div class="toolbar" id="toolbar">
+              <input class="search" id="search" type="search" placeholder="Buscar controle, ID…" aria-label="Buscar">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th></th><th>Status</th><th>ID</th><th>Controle</th><th>Severidade</th><th>Resultado</th></tr></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="row4">
+          <section class="card" id="updates">
+            <div class="card-head"><h2>Atualizações do macOS</h2><span class="sub" id="updSource"></span></div>
+            <div id="updList"></div>
+          </section>
+          <section class="card" id="meta">
+            <div class="card-head"><h2>Execução</h2><span class="sub" id="runId"></span></div>
+            <dl class="kv" id="metaKv"></dl>
+          </section>
+        </div>
+      </div>
+
+      <div class="side-col">
+        <section class="card profile">
+          <div class="ring-wrap" title="Score ponderado">
+            <svg viewBox="0 0 132 132" aria-hidden="true">
+              <circle cx="66" cy="66" r="60" fill="none" stroke="var(--tile-gray)" stroke-width="8"/>
+              <circle id="ringArc" cx="66" cy="66" r="60" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 400"/>
+            </svg>
+            <div class="ring-inner">
+              <svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M1 19h22"/></svg>
+            </div>
+          </div>
+          <h3 id="devName">—</h3>
+          <div class="model" id="devModel"></div>
+          <dl class="facts" id="devFacts"></dl>
+          <button class="btn-soft" id="downloadBtn">
+            <svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+            Baixar JSON
+          </button>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>Visão geral</h2><span class="sub" id="donutSub"></span></div>
+          <div class="donut-wrap">
+            <svg viewBox="0 0 200 200" id="donut" role="img" aria-label="Distribuição de resultados"></svg>
+            <div class="donut-center"><b id="donutNum">—</b><span>Score ponderado</span></div>
+          </div>
+          <div class="legend center" id="donutLegend"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h2>Resultados por severidade</h2><span class="sub">controles</span></div>
+          <div class="cat-rows" id="sevRows"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="tip" role="tooltip"></div>
+<div id="drop">Solte o audit_report_*.json aqui</div>
+<div class="toast" id="toast"></div>
+
+<script id="report-data" type="application/json">{
+  "schema_version": "1.0",
+  "metadata": {
+    "tool": "MacFleet Auditor",
+    "tool_version": "1.0.0",
+    "run_id": "719b1c50-91ea-4ccd-b209-b03d1079421b",
+    "started_at": "2026-10-22T16:19:56-03:00",
+    "finished_at": "2026-10-22T16:20:40-03:00",
+    "duration_seconds": 43.87,
+    "hostname": "MacBook-Air-de-Arthur.local",
+    "executed_by": "arthur",
+    "sudo_user": null,
+    "running_as_root": false,
+    "python_version": "3.9.6",
+    "platform": "macOS-26.0-arm64-arm-64bit",
+    "options": {
+      "updates_mode": "live",
+      "policy_file": null
+    }
+  },
+  "policy": {
+    "name": "MacFleet Baseline",
+    "version": "1.0.0",
+    "description": "Baseline mínima de hardening e saúde operacional para endpoints macOS corporativos."
+  },
+  "summary": {
+    "overall_status": "NON_COMPLIANT",
+    "total_rules": 10,
+    "passed": 5,
+    "warnings": 4,
+    "failed": 1,
+    "skipped": 0,
+    "compliance_score": 50.0,
+    "weighted_score": 79.2,
+    "critical_failures": []
+  },
+  "compliance_results": [
+    {
+      "id": "SEC-001",
+      "title": "Criptografia de disco (FileVault)",
+      "category": "Security Hardening",
+      "severity": "critical",
+      "status": "PASS",
+      "expected": "FileVault ativo (On)",
+      "actual": "on",
+      "message": "Estado 'on' conforme.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure FileVault Is Enabled",
+        "NIST mSCP: system_settings_filevault_enforce"
+      ],
+      "data_path": "security.filevault.state"
+    },
+    {
+      "id": "SEC-002",
+      "title": "Application Firewall ativo",
+      "category": "Security Hardening",
+      "severity": "high",
+      "status": "PASS",
+      "expected": "Firewall habilitado (State = 1 ou 2)",
+      "actual": true,
+      "message": "Controle ativo.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure Firewall Is Enabled",
+        "NIST mSCP: system_settings_firewall_enable"
+      ],
+      "data_path": "security.firewall.enabled"
+    },
+    {
+      "id": "SEC-003",
+      "title": "Firewall em Stealth Mode",
+      "category": "Security Hardening",
+      "severity": "low",
+      "status": "WARNING",
+      "expected": "Stealth mode habilitado",
+      "actual": false,
+      "message": "Stealth mode desativado (responde a ICMP/probes).",
+      "remediation": "sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on",
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure Firewall Stealth Mode Is Enabled",
+        "NIST mSCP: system_settings_firewall_stealth_mode_enable"
+      ],
+      "data_path": "security.firewall.stealth_mode"
+    },
+    {
+      "id": "SEC-004",
+      "title": "Gatekeeper ativo",
+      "category": "Security Hardening",
+      "severity": "high",
+      "status": "PASS",
+      "expected": "assessments enabled",
+      "actual": true,
+      "message": "Controle ativo.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure Gatekeeper Is Enabled",
+        "NIST mSCP: os_gatekeeper_enable"
+      ],
+      "data_path": "security.gatekeeper.enabled"
+    },
+    {
+      "id": "SEC-005",
+      "title": "System Integrity Protection (SIP)",
+      "category": "Security Hardening",
+      "severity": "critical",
+      "status": "PASS",
+      "expected": "SIP enabled",
+      "actual": "enabled",
+      "message": "Estado 'enabled' conforme.",
+      "remediation": null,
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure System Integrity Protection Is Enabled",
+        "NIST mSCP: os_sip_enable"
+      ],
+      "data_path": "security.sip.state"
+    },
+    {
+      "id": "SEC-006",
+      "title": "Atualizações de segurança pendentes",
+      "category": "Patch Management",
+      "severity": "high",
+      "status": "FAIL",
+      "expected": "0 atualizações de segurança pendentes",
+      "actual": 1,
+      "message": "1 pendente(s) — acima do máximo permitido (0).",
+      "remediation": "sudo softwareupdate --install --all --restart (ou enforcement via Declarative Device Management no MDM)",
+      "references": [
+        "CIS Apple macOS Benchmark: Ensure All Apple-provided Software Is Current"
+      ],
+      "data_path": "security.software_updates.pending_security"
+    },
+    {
+      "id": "SEC-007",
+      "title": "Atualizações pendentes (todas)",
+      "category": "Patch Management",
+      "severity": "medium",
+      "status": "WARNING",
+      "expected": "Nenhuma atualização pendente",
+      "actual": 2,
+      "message": "2 pendente(s) — acima do máximo permitido (0).",
+      "remediation": "Revisar `softwareupdate --list` e agendar janela de manutenção.",
+      "references": [],
+      "data_path": "security.software_updates.pending_total"
+    },
+    {
+      "id": "OPS-001",
+      "title": "Espaço livre no volume principal",
+      "category": "Operational Health",
+      "severity": "medium",
+      "status": "WARNING",
+      "expected": "> 15% livre",
+      "actual": 12.48,
+      "message": "12.48% — abaixo do ideal (> 15.0%).",
+      "remediation": "Liberar espaço (caches, Downloads, snapshots locais: tmutil listlocalsnapshots /). Pouco espaço impede instalação de updates do macOS.",
+      "references": [],
+      "data_path": "system.storage.free_percent"
+    },
+    {
+      "id": "OPS-002",
+      "title": "Versão mínima suportada do macOS",
+      "category": "Operational Health",
+      "severity": "medium",
+      "status": "PASS",
+      "expected": ">= 15.0",
+      "actual": "26.0",
+      "message": "Versão 26.0 >= 15.0.",
+      "remediation": null,
+      "references": [],
+      "data_path": "system.os.product_version"
+    },
+    {
+      "id": "IAM-001",
+      "title": "Usuário sem privilégio de Administrador",
+      "category": "Identity & Access",
+      "severity": "medium",
+      "status": "WARNING",
+      "expected": "Usuário padrão (fora do grupo admin)",
+      "actual": true,
+      "message": "Usuário é membro do grupo admin.",
+      "remediation": "Aplicar menor privilégio: remover do grupo admin (sudo dseditgroup -o edit -d \u003cusuario> -t user admin) e usar elevação just-in-time.",
+      "references": [
+        "CIS Controls v8 — 5.4 Restrict Administrator Privileges"
+      ],
+      "data_path": "system.user.is_admin"
+    }
+  ],
+  "collected_data": {
+    "system": {
+      "device": {
+        "collection_status": "ok",
+        "computer_name": "MacBook Air de Arthur",
+        "local_hostname": "MacBook-Air-de-Arthur",
+        "hostname": "MacBook-Air-de-Arthur.local",
+        "model_name": "MacBook Air",
+        "model_identifier": "Mac14,2",
+        "model_number": "Z15S000XXBZ/A",
+        "serial_number": "EXAMPLE0SN01",
+        "hardware_uuid": "00000000-0000-0000-0000-EXAMPLE00001",
+        "chip": "Apple M2",
+        "cpu_cores": "proc 8:4:4",
+        "memory": "16 GB",
+        "firmware_version": "13822.1.2",
+        "activation_lock_status": "activation_lock_disabled",
+        "evidence": [
+          {
+            "command": "/usr/sbin/system_profiler SPHardwareDataType -json",
+            "returncode": 0,
+            "output": "[JSON omitido da evidência — campos extraídos abaixo]",
+            "error": null,
+            "duration_ms": 650
+          }
+        ]
+      },
+      "os": {
+        "collection_status": "ok",
+        "product_name": "macOS",
+        "product_version": "26.0",
+        "product_version_extra": null,
+        "build_version": "25A354",
+        "full_version": "26.0",
+        "kernel_version": "25.0.0",
+        "architecture": "arm64",
+        "source": "sw_vers",
+        "evidence": [
+          {
+            "command": "/usr/bin/sw_vers",
+            "returncode": 0,
+            "output": "ProductName:\t\tmacOS\nProductVersion:\t\t26.0\nBuildVersion:\t\t25A354",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "storage": {
+        "collection_status": "ok",
+        "path": "/",
+        "device": "/dev/disk3s1s1",
+        "total_bytes": 245107195904,
+        "used_bytes": 214510075904,
+        "free_bytes": 30597120000,
+        "total_gb": 245.11,
+        "used_gb": 214.51,
+        "free_gb": 30.6,
+        "used_percent": 87.52,
+        "free_percent": 12.48,
+        "evidence": [
+          {
+            "command": "/bin/df -Pk /",
+            "returncode": 0,
+            "output": "Filesystem     1024-blocks      Used Available Capacity  Mounted on\n/dev/disk3s1s1   239362496  11180000  29880000    28%    /",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "user": {
+        "collection_status": "ok",
+        "username": "arthur",
+        "uid": 501,
+        "resolved_from": "process_user",
+        "is_admin": true,
+        "check_method": "dseditgroup",
+        "admin_group_members": [
+          "arthur",
+          "itadmin",
+          "root"
+        ],
+        "audit_running_as_root": false,
+        "evidence": [
+          {
+            "command": "/usr/sbin/dseditgroup -o checkmember -m arthur admin",
+            "returncode": 0,
+            "output": "yes arthur is a member of admin",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "uptime": {
+        "collection_status": "ok",
+        "boot_time": "2026-10-16T06:43:56-03:00",
+        "uptime_seconds": 552960,
+        "uptime_days": 6.4
+      }
+    },
+    "security": {
+      "filevault": {
+        "collection_status": "ok",
+        "state": "on",
+        "enabled": true,
+        "deferred_enablement_pending": false,
+        "progress_percent": null,
+        "evidence": [
+          {
+            "command": "/usr/bin/fdesetup status",
+            "returncode": 0,
+            "output": "FileVault is On.",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "firewall": {
+        "collection_status": "ok",
+        "enabled": true,
+        "state": "on",
+        "state_code": 1,
+        "stealth_mode": false,
+        "source": "socketfilterfw",
+        "evidence": [
+          {
+            "command": "/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate",
+            "returncode": 0,
+            "output": "Firewall is enabled. (State = 1)",
+            "error": null,
+            "duration_ms": 12
+          },
+          {
+            "command": "/usr/libexec/ApplicationFirewall/socketfilterfw --getstealthmode",
+            "returncode": 0,
+            "output": "Firewall stealth mode is off",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "gatekeeper": {
+        "collection_status": "ok",
+        "enabled": true,
+        "evidence": [
+          {
+            "command": "/usr/sbin/spctl --status",
+            "returncode": 0,
+            "output": "assessments enabled",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "sip": {
+        "collection_status": "ok",
+        "state": "enabled",
+        "enabled": true,
+        "evidence": [
+          {
+            "command": "/usr/bin/csrutil status",
+            "returncode": 0,
+            "output": "System Integrity Protection status: enabled.",
+            "error": null,
+            "duration_ms": 12
+          }
+        ]
+      },
+      "software_updates": {
+        "collection_status": "ok",
+        "pending_total": 2,
+        "pending_security": 1,
+        "restart_required": true,
+        "updates": [
+          {
+            "label": "macOS Tahoe 26.0.1-25A362",
+            "title": "macOS Tahoe 26.0.1",
+            "version": "26.0.1",
+            "recommended": true,
+            "restart_required": true,
+            "is_security": true
+          },
+          {
+            "label": "Command Line Tools for Xcode 26.0-26.0",
+            "title": "Command Line Tools for Xcode 26.0",
+            "version": "26.0",
+            "recommended": true,
+            "restart_required": false,
+            "is_security": false
+          }
+        ],
+        "source": "softwareupdate",
+        "evidence": [
+          {
+            "command": "/usr/sbin/softwareupdate --list --include-config-data",
+            "returncode": 0,
+            "output": "Software Update Tool\n\nFinding available software\nSoftware Update found the following new or updated software:\n* Label: macOS Tahoe 26.0.1-25A362\n\tTitle: macOS Tahoe 26.0.1, Version: 26.0.1, Size: 2214311KiB, Recommended: YES, Action: restart,\n* Label: Command Line Tools for Xcode 26.0-26.0\n\tTitle: Command Line Tools for Xcode 26.0, Version: 26.0, Size: 912345KiB, Recommended: YES,",
+            "error": null,
+            "duration_ms": 41000
+          }
+        ]
+      }
+    }
+  }
+}</script>
+<script>
+(function () {
+  "use strict";
+
+  // ----------------------------------------------------------------- constants
+  var STATUS = {
+    PASS:    { label: "PASS",    word: "Aprovado",  color: "var(--good)" },
+    WARNING: { label: "WARNING", word: "Atenção",   color: "var(--warning)" },
+    FAIL:    { label: "FAIL",    word: "Falha",     color: "var(--critical)" },
+    SKIPPED: { label: "SKIPPED", word: "Ignorado",  color: "var(--skip)" }
+  };
+  var ORDER = ["PASS", "WARNING", "FAIL", "SKIPPED"];
+  var OVERALL = {
+    COMPLIANT:     { word: "Conforme",      line: "Todos os controles aprovados" },
+    AT_RISK:       { word: "Em risco",      line: "Há controles com avisos" },
+    NON_COMPLIANT: { word: "Não conforme",  line: "Há controles reprovados" }
+  };
+  var SEV = ["critical", "high", "medium", "low"];
+  var SEV_PT = { critical: "Crítica", high: "Alta", medium: "Média", low: "Baixa" };
+  var ICONS = {
+    PASS: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5" fill="currentColor" stroke="none"/><path d="M5 8.2l2 2 4-4" stroke="#fff"/></svg>',
+    WARNING: '<svg viewBox="0 0 16 16"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.6M8 11.6v.2" stroke="#2a2000" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    FAIL: '<svg viewBox="0 0 16 16" fill="none" stroke-linecap="round"><circle cx="8" cy="8" r="6.5" fill="currentColor"/><path d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8" stroke="#fff" stroke-width="2"/></svg>',
+    SKIPPED: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="5.5"/></svg>'
+  };
+
+  var state = { report: null, cat: "", status: "", query: "", open: {} };
+
+  // ----------------------------------------------------------------- helpers
+  function $(id) { return document.getElementById(id); }
+  function esc(v) {
+    return String(v === null || v === undefined ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function fmt(v, suffix) {
+    if (v === null || v === undefined || v === "") return "n/d";
+    if (v === true) return "Sim";
+    if (v === false) return "Não";
+    return String(v) + (suffix || "");
+  }
+  function num(v, d) {
+    if (typeof v !== "number" || isNaN(v)) return "—";
+    return v.toLocaleString("pt-BR", { minimumFractionDigits: d || 0, maximumFractionDigits: d === undefined ? 1 : d });
+  }
+  function get(obj, path) {
+    return path.split(".").reduce(function (n, k) { return n && typeof n === "object" ? n[k] : undefined; }, obj);
+  }
+  function badge(status) {
+    var s = STATUS[status] || STATUS.SKIPPED;
+    return '<span class="badge ' + esc(status) + '">' + (ICONS[status] || "") + esc(s.label) + "</span>";
+  }
+  function fmtDate(iso) {
+    if (!iso) return "n/d";
+    var d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium" });
+  }
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.classList.add("on");
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove("on"); }, 3200);
+  }
+
+  // ----------------------------------------------------------------- tooltip
+  var tip = $("tip");
+  function showTip(e, html) {
+    tip.innerHTML = html; tip.classList.add("on");
+    var x = e.clientX + 14, y = e.clientY + 14;
+    var r = tip.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 14;
+    if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.classList.remove("on"); }
+  document.addEventListener("mousemove", function (e) {
+    var el = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (el) showTip(e, el.getAttribute("data-tip")); else hideTip();
+  });
+
+  // ----------------------------------------------------------------- render
+  function counts(results) {
+    var c = { PASS: 0, WARNING: 0, FAIL: 0, SKIPPED: 0 };
+    results.forEach(function (r) { c[r.status] = (c[r.status] || 0) + 1; });
+    return c;
+  }
+
+  function renderHeader(r) {
+    var dev = get(r, "collected_data.system.device") || {};
+    var md = r.metadata || {};
+    $("brandSub").textContent = (dev.computer_name || md.hostname || "Mac") + " · " + fmtDate(md.started_at);
+    document.title = "MacFleet Auditor — " + (dev.computer_name || md.hostname || "Relatório");
+
+    var cats = [];
+    (r.compliance_results || []).forEach(function (x) { if (cats.indexOf(x.category) < 0) cats.push(x.category); });
+    var nav = $("nav");
+    nav.innerHTML = '<button data-cat="" aria-pressed="' + (state.cat === "") + '">Visão geral</button>' +
+      cats.map(function (c) {
+        return '<button data-cat="' + esc(c) + '" aria-pressed="' + (state.cat === c) + '">' + esc(c) + "</button>";
+      }).join("");
+  }
+
+  function renderTiles(r) {
+    var s = r.summary || {};
+    var res = r.compliance_results || [];
+    var c = counts(res);
+    var o = OVERALL[s.overall_status] || { word: s.overall_status || "—", line: "" };
+    $("policyName").textContent = r.policy ? (r.policy.name + " v" + r.policy.version) : "";
+    $("overallWord").textContent = o.word;
+    var total = res.length || 1;
+    $("overallBar").innerHTML = ORDER.filter(function (k) { return c[k]; }).map(function (k) {
+      return '<span style="width:' + (c[k] / total * 100) + '%;background:' + STATUS[k].color + '"></span>';
+    }).join("");
+    $("overallLine").textContent = o.line;
+    var foot = [];
+    if (c.FAIL || c.WARNING) foot.push('<span class="delta-bad">' + c.FAIL + " falha(s) · " + c.WARNING + " aviso(s)</span>");
+    if ((s.critical_failures || []).length) foot.push('<span class="chip">Críticas: ' + esc(s.critical_failures.join(", ")) + "</span>");
+    else foot.push('<span class="chip">Sem falhas críticas</span>');
+    $("overallFoot").innerHTML = foot.join("");
+
+    $("scoreNum").textContent = num(s.compliance_score, 0);
+    $("weighted").textContent = num(s.weighted_score, 1);
+    var sc = Math.max(0, Math.min(100, s.compliance_score || 0));
+    $("scoreBar").style.width = sc + "%"; $("scoreRest").style.width = (100 - sc) + "%";
+    $("scoreFoot").innerHTML =
+      '<span class="chip">' + badge("PASS") + " " + c.PASS + " de " + (res.length - c.SKIPPED) + "</span>" +
+      (c.SKIPPED ? '<span class="chip">' + c.SKIPPED + " ignorado(s)</span>" : "");
+
+    var u = get(r, "collected_data.security.software_updates") || {};
+    if (u.collection_status === "skipped") {
+      $("updNum").textContent = "—"; $("updUnit").textContent = "não verificado";
+      $("updSec").textContent = "Coleta desativada (--updates-mode skip)";
+      $("updFoot").innerHTML = "";
+    } else {
+      $("updNum").textContent = u.pending_total === null || u.pending_total === undefined ? "—" : u.pending_total;
+      $("updUnit").textContent = u.pending_total === 1 ? "update" : "updates";
+      $("updSec").textContent = (u.pending_security || 0) + " de segurança";
+      var f = [];
+      if (u.restart_required) f.push('<span class="chip">⟳ Reinício necessário</span>');
+      f.push('<span class="chip">Fonte: ' + esc(u.source || "n/d") + "</span>");
+      $("updFoot").innerHTML = f.join("");
+    }
+  }
+
+  function renderCategories(r) {
+    var res = r.compliance_results || [];
+    var cats = {};
+    res.forEach(function (x) {
+      cats[x.category] = cats[x.category] || { PASS: 0, WARNING: 0, FAIL: 0, SKIPPED: 0, total: 0 };
+      cats[x.category][x.status]++; cats[x.category].total++;
+    });
+    $("catLegend").innerHTML = ["PASS", "WARNING", "FAIL"].map(function (k) {
+      return '<span><i style="background:' + STATUS[k].color + '"></i>' + STATUS[k].label + "</span>";
+    }).join("");
+    $("catRows").innerHTML = Object.keys(cats).map(function (name) {
+      var c = cats[name];
+      var evaluated = c.total - c.SKIPPED;
+      var pct = evaluated ? Math.round(c.PASS / evaluated * 100) : 0;
+      var segs = ORDER.filter(function (k) { return c[k]; }).map(function (k) {
+        var tipHtml = "<b>" + esc(name) + "</b><br>" + STATUS[k].label + ": " + c[k] + " de " + c.total + " controle(s)";
+        return '<span class="' + k + '" style="flex:' + c[k] + ";background:" + STATUS[k].color + '" data-tip="' + esc(tipHtml) + '">' +
+          (c[k] > 0 ? c[k] : "") + "</span>";
+      }).join("");
+      return '<div class="cat-row"><div class="label" title="' + esc(name) + '">' + esc(name) + '</div>' +
+        '<div class="stack" role="img" aria-label="' + esc(name + ": " + c.PASS + " PASS, " + c.WARNING + " WARNING, " + c.FAIL + " FAIL") + '">' + segs + "</div>" +
+        '<div class="pct" title="% aprovado">' + pct + "%</div></div>";
+    }).join("");
+
+    // prioridades: FAIL primeiro, depois WARNING, por severidade
+    var rk = { FAIL: 0, WARNING: 1 }, sk = { critical: 0, high: 1, medium: 2, low: 3 };
+    var top = res.filter(function (x) { return x.status === "FAIL" || x.status === "WARNING"; })
+      .sort(function (a, b) { return (rk[a.status] - rk[b.status]) || (sk[a.severity] - sk[b.severity]); }).slice(0, 3);
+    $("prio").innerHTML = top.length
+      ? "<h3>Prioridades</h3>" + top.map(function (x) {
+          return '<div class="prio-item" data-goto="' + esc(x.id) + '">' + badge(x.status) +
+            "<div><b>" + esc(x.id + " · " + x.title) + "</b><small>" + esc(x.remediation || x.message) + "</small></div></div>";
+        }).join("")
+      : "<h3>Prioridades</h3><p style=\"margin:0;color:var(--muted)\">" + badge("PASS") + " Nenhuma ação pendente.</p>";
+
+    // resultados por severidade
+    var sev = {};
+    SEV.forEach(function (k) { sev[k] = { FAIL: 0, WARNING: 0, PASS: 0 }; });
+    res.forEach(function (x) { if (sev[x.severity] && x.status !== "SKIPPED") sev[x.severity][x.status]++; });
+    $("sevRows").innerHTML = SEV.map(function (k) {
+      var s = sev[k], total = s.FAIL + s.WARNING + s.PASS;
+      if (!total) return "";
+      var segs = ["PASS", "WARNING", "FAIL"].filter(function (st) { return s[st]; }).map(function (st) {
+        return '<span class="' + st + '" style="flex:' + s[st] + ";background:" + STATUS[st].color + '" data-tip="' +
+          esc("<b>Severidade " + SEV_PT[k] + "</b><br>" + STATUS[st].label + ": " + s[st]) + '">' + s[st] + "</span>";
+      }).join("");
+      return '<div class="cat-row" style="grid-template-columns:62px minmax(0,1fr) 28px"><div class="label">' + SEV_PT[k] +
+        '</div><div class="stack" style="height:20px">' + segs + '</div><div class="pct">' + total + "</div></div>";
+    }).join("");
+  }
+
+  function renderStorage(r) {
+    var st = get(r, "collected_data.system.storage") || {};
+    var rule = (r.compliance_results || []).filter(function (x) { return x.data_path === "system.storage.free_percent"; })[0];
+    $("storageDev").textContent = st.device ? "· " + st.device : "";
+    $("freeGb").textContent = num(st.free_gb, 1);
+    $("storageStatus").innerHTML = rule ? badge(rule.status) : "";
+    $("storageStatus").className = "";
+
+    var max = st.total_gb || 1;
+    var cols = [
+      { k: "Total", v: st.total_gb, c: "var(--tile-blue)" },
+      { k: "Em uso", v: st.used_gb, c: "var(--black)" },
+      { k: "Livre", v: st.free_gb, c: "var(--accent)" }
+    ];
+    $("capCols").innerHTML = cols.map(function (x) {
+      var h = Math.max(4, (x.v || 0) / max * 100);
+      return '<div class="cap-col"><div class="bar" style="height:' + h + "%;background:" + x.c + '" data-tip="' +
+        esc("<b>" + x.k + "</b><br>" + num(x.v, 2) + " GB") + '"></div><small>' + x.k + "</small></div>";
+    }).join("");
+
+    var used = st.used_percent || 0;
+    var pParams = (rule && rule.expected) ? rule.expected : "";
+    $("capLine").setAttribute("aria-label", "Uso do disco: " + num(used, 1) + "%");
+    $("capLine").innerHTML = '<div class="fill" style="width:' + used + '%" data-tip="' + esc("<b>Em uso</b><br>" + num(used, 2) + "%") + '"></div>' +
+      '<div class="mark l" style="left:85%" data-tip="Abaixo de 15% livre: WARNING"><em>15% livre</em></div>' +
+      '<div class="mark r" style="left:90%" data-tip="Abaixo de 10% livre: FAIL"><em>10%</em></div>';
+    $("storageFoot").innerHTML =
+      '<span class="pill-accent">' + num(st.free_percent, 2) + "% livre</span>" +
+      '<span class="pill-outline">' + num(used, 1) + "% em uso</span>" +
+      (pParams ? '<span class="pill-outline">Meta: ' + esc(pParams) + "</span>" : "");
+  }
+
+  function renderProfile(r) {
+    var dev = get(r, "collected_data.system.device") || {};
+    var os = get(r, "collected_data.system.os") || {};
+    var usr = get(r, "collected_data.system.user") || {};
+    var up = get(r, "collected_data.system.uptime") || {};
+    var s = r.summary || {};
+    $("devName").textContent = dev.computer_name || dev.hostname || "Mac";
+    $("devModel").textContent = [dev.model_name, dev.model_identifier].filter(Boolean).join(" · ");
+    var facts = [
+      ["Serial", dev.serial_number],
+      ["macOS", (os.product_name || "macOS") + " " + (os.full_version || os.product_version || "") + (os.build_version ? " (" + os.build_version + ")" : "")],
+      ["Chip / RAM", [dev.chip, dev.memory].filter(Boolean).join(" · ")],
+      ["Usuário", (usr.username || "n/d") + (usr.is_admin ? " · admin" : usr.is_admin === false ? " · padrão" : "")],
+      ["Uptime", up.uptime_days !== undefined && up.uptime_days !== null ? num(up.uptime_days, 1) + " dias" : "n/d"]
+    ];
+    $("devFacts").innerHTML = facts.map(function (f) {
+      return "<div><dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1] || "n/d") + "</dd></div>";
+    }).join("");
+    var C = 2 * Math.PI * 60, w = Math.max(0, Math.min(100, s.weighted_score || 0));
+    $("ringArc").setAttribute("stroke-dasharray", (C * w / 100) + " " + C);
+  }
+
+  function renderDonut(r) {
+    var res = r.compliance_results || [];
+    var c = counts(res), total = res.length || 1;
+    var R = 80, C = 2 * Math.PI * R, gap = 3, off = 0;
+    var svg = '<circle cx="100" cy="100" r="' + R + '" fill="none" stroke="var(--tile-gray)" stroke-width="20"/>';
+    var shown = ORDER.filter(function (k) { return c[k]; });
+    shown.forEach(function (k) {
+      var len = c[k] / total * C;
+      var seg = Math.max(0, len - (shown.length > 1 ? gap : 0));
+      svg += '<circle class="seg" cx="100" cy="100" r="' + R + '" fill="none" stroke="' + STATUS[k].color +
+        '" stroke-width="20" stroke-dasharray="' + seg + " " + (C - seg) + '" stroke-dashoffset="' + (-off) +
+        '" data-tip="' + esc("<b>" + STATUS[k].label + "</b><br>" + c[k] + " de " + res.length + " controles (" + Math.round(c[k] / total * 100) + "%)") + '"/>';
+      off += len;
+    });
+    $("donut").innerHTML = svg;
+    $("donutNum").textContent = num((r.summary || {}).weighted_score, 1);
+    $("donutSub").textContent = res.length + " controles";
+    $("donutLegend").innerHTML = ORDER.map(function (k) {
+      return '<span><i style="background:' + STATUS[k].color + '"></i>' + STATUS[k].label + " " + c[k] + "</span>";
+    }).join("");
+  }
+
+  function evidenceFor(r, dataPath) {
+    var src = (dataPath || "").split(".").slice(0, -1).join(".");
+    var sec = get(r.collected_data || {}, src);
+    return (sec && sec.evidence) || [];
+  }
+
+  function renderToolbar(r) {
+    var c = counts(r.compliance_results || []);
+    var btns = [["", "Todos", (r.compliance_results || []).length]].concat(
+      ["FAIL", "WARNING", "PASS", "SKIPPED"].filter(function (k) { return c[k] || k !== "SKIPPED"; })
+        .map(function (k) { return [k, STATUS[k].label, c[k]]; }));
+    var tb = $("toolbar");
+    tb.querySelectorAll(".filter").forEach(function (b) { b.remove(); });
+    var search = $("search");
+    btns.forEach(function (b) {
+      var el = document.createElement("button");
+      el.className = "filter"; el.setAttribute("data-status", b[0]);
+      el.setAttribute("aria-pressed", String(state.status === b[0]));
+      el.innerHTML = esc(b[1]) + ' <span class="n">' + b[2] + "</span>";
+      tb.insertBefore(el, search);
+    });
+  }
+
+  function renderTable(r) {
+    var q = state.query.toLowerCase();
+    var rows = (r.compliance_results || []).filter(function (x) {
+      if (state.cat && x.category !== state.cat) return false;
+      if (state.status && x.status !== state.status) return false;
+      if (q && (x.id + " " + x.title + " " + x.message + " " + x.category).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+    var rank = { FAIL: 0, WARNING: 1, PASS: 2, SKIPPED: 3 }, srank = { critical: 0, high: 1, medium: 2, low: 3 };
+    rows.sort(function (a, b) { return (rank[a.status] - rank[b.status]) || (srank[a.severity] - srank[b.severity]) || a.id.localeCompare(b.id); });
+    $("ctrlCount").textContent = "· " + rows.length + " de " + (r.compliance_results || []).length;
+
+    if (!rows.length) { $("tbody").innerHTML = '<tr><td colspan="6" class="empty">Nenhum controle corresponde ao filtro.</td></tr>'; return; }
+
+    $("tbody").innerHTML = rows.map(function (x) {
+      var open = !!state.open[x.id];
+      var ev = evidenceFor(r, x.data_path);
+      var evHtml = ev.length ? ev.map(function (e) {
+        return "<div style=\"margin-top:6px\"><code>$ " + esc(e.command) + "</code> <span class=\"sub\" style=\"color:var(--muted);font-size:11px\">rc=" +
+          esc(e.returncode) + " · " + esc(e.duration_ms) + "ms</span><pre>" + esc(e.error ? "ERRO: " + e.error + "\n" + (e.output || "") : (e.output || "(sem saída)")) + "</pre></div>";
+      }).join("") : '<p style="color:var(--muted)">Sem evidência de comando para este controle.</p>';
+      var actual = x.actual;
+      if (typeof actual === "boolean") actual = actual ? "true" : "false";
+      return '<tr class="row' + (open ? " open" : "") + '" data-id="' + esc(x.id) + '" tabindex="0" aria-expanded="' + open + '">' +
+        '<td><svg class="i chev" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M9 6l6 6-6 6"/></svg></td>' +
+        "<td>" + badge(x.status) + "</td>" +
+        '<td class="id">' + esc(x.id) + "</td>" +
+        '<td class="title"><b>' + esc(x.title) + "</b><small>" + esc(x.category) + "</small></td>" +
+        '<td><span class="sev ' + esc(x.severity) + '"><i></i>' + esc(SEV_PT[x.severity] || x.severity) + "</span></td>" +
+        '<td class="msg">' + esc(x.message) + "</td></tr>" +
+        '<tr class="detail"' + (open ? "" : " hidden") + '><td colspan="6"><div class="detail-grid">' +
+          "<div><h4>Esperado</h4><p>" + esc(x.expected || "n/d") + "</p></div>" +
+          "<div><h4>Valor coletado</h4><p><code>" + esc(fmt(actual)) + "</code> <span style=\"color:var(--muted);font-size:11px\">" + esc(x.data_path) + "</span></p></div>" +
+          (x.remediation ? "<div style=\"grid-column:1/-1\"><h4>Remediação</h4><pre>" + esc(x.remediation) + "</pre></div>" : "") +
+          ((x.references || []).length ? "<div style=\"grid-column:1/-1\"><h4>Referências</h4><p>" + x.references.map(esc).join("<br>") + "</p></div>" : "") +
+          "<div style=\"grid-column:1/-1\"><h4>Evidência</h4>" + evHtml + "</div>" +
+        "</div></td></tr>";
+    }).join("");
+  }
+
+  function renderUpdates(r) {
+    var u = get(r, "collected_data.security.software_updates") || {};
+    var when = u.last_successful_check ? " · última verificação " + fmtDate(u.last_successful_check) : "";
+    $("updSource").textContent = (u.source ? "fonte: " + u.source : "") + when;
+    if (u.collection_status === "skipped") { $("updList").innerHTML = '<p class="empty">' + esc(u.reason || "Não verificado.") + "</p>"; return; }
+    if (u.collection_status === "error") { $("updList").innerHTML = '<p class="empty">Erro na coleta: ' + esc(u.error) + "</p>"; return; }
+    var list = u.updates || [];
+    if (!list.length) { $("updList").innerHTML = '<p class="empty">' + badge("PASS") + " Nenhuma atualização pendente.</p>"; return; }
+    $("updList").innerHTML = list.map(function (x) {
+      return '<div class="upd"><div class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></div>' +
+        '<div class="t"><b title="' + esc(x.label) + '">' + esc(x.title || x.label) + "</b><small>" +
+        esc([x.version ? "v" + x.version : null, x.restart_required ? "requer reinício" : null, x.recommended ? "recomendada" : null].filter(Boolean).join(" · ")) +
+        "</small></div>" + (x.is_security ? badge("FAIL").replace(">FAIL<", ">Segurança<") : '<span class="pill-outline">Geral</span>') + "</div>";
+    }).join("");
+  }
+
+  function renderMeta(r) {
+    var m = r.metadata || {};
+    $("runId").textContent = m.run_id ? "run " + m.run_id.slice(0, 8) : "";
+    var kv = [
+      ["Ferramenta", (m.tool || "") + " " + (m.tool_version || "")],
+      ["Início", fmtDate(m.started_at)],
+      ["Duração", m.duration_seconds !== undefined ? num(m.duration_seconds, 1) + " s" : "n/d"],
+      ["Host", m.hostname],
+      ["Executado por", (m.executed_by || "n/d") + (m.running_as_root ? " (root)" : "") + (m.sudo_user ? " via sudo de " + m.sudo_user : "")],
+      ["Python", m.python_version],
+      ["Plataforma", m.platform],
+      ["Modo updates", m.options && m.options.updates_mode],
+      ["Política", r.policy ? r.policy.name + " v" + r.policy.version : "n/d"],
+      ["Schema", r.schema_version]
+    ];
+    $("metaKv").innerHTML = kv.map(function (x) { return "<dt>" + esc(x[0]) + "</dt><dd>" + esc(fmt(x[1])) + "</dd>"; }).join("");
+  }
+
+  function renderAll() {
+    var r = state.report;
+    if (!r) return;
+    renderHeader(r); renderTiles(r); renderCategories(r); renderStorage(r);
+    renderProfile(r); renderDonut(r); renderToolbar(r); renderTable(r);
+    renderUpdates(r); renderMeta(r);
+  }
+
+  function load(report, origin) {
+    if (!report || !Array.isArray(report.compliance_results)) {
+      toast("Arquivo inválido: não parece um audit_report do MacFleet Auditor.");
+      return;
+    }
+    state.report = report; state.cat = ""; state.status = ""; state.query = ""; state.open = {};
+    $("search").value = "";
+    renderAll();
+    if (origin) toast("Relatório carregado: " + origin);
+  }
+
+  // ----------------------------------------------------------------- events
+  $("nav").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    state.cat = b.getAttribute("data-cat") || "";
+    renderHeader(state.report); renderTable(state.report);
+    if (state.cat) $("controls").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("toolbar").addEventListener("click", function (e) {
+    var b = e.target.closest(".filter"); if (!b) return;
+    state.status = b.getAttribute("data-status") || "";
+    renderToolbar(state.report); renderTable(state.report);
+  });
+  $("prio").addEventListener("click", function (e) {
+    var it = e.target.closest("[data-goto]"); if (!it) return;
+    var id = it.getAttribute("data-goto");
+    state.cat = ""; state.status = ""; state.query = ""; $("search").value = ""; state.open[id] = true;
+    renderHeader(state.report); renderToolbar(state.report); renderTable(state.report);
+    var row = document.querySelector('tr.row[data-id="' + id + '"]');
+    if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  $("search").addEventListener("input", function (e) { state.query = e.target.value; renderTable(state.report); });
+  function toggleRow(tr) {
+    var id = tr.getAttribute("data-id"); state.open[id] = !state.open[id];
+    tr.classList.toggle("open", state.open[id]); tr.setAttribute("aria-expanded", state.open[id]);
+    tr.nextElementSibling.hidden = !state.open[id];
+  }
+  $("tbody").addEventListener("click", function (e) { var tr = e.target.closest("tr.row"); if (tr) toggleRow(tr); });
+  $("tbody").addEventListener("keydown", function (e) {
+    var tr = e.target.closest("tr.row"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleRow(tr); }
+  });
+
+  function readFile(file) {
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      try { load(JSON.parse(fr.result), file.name); }
+      catch (err) { toast("Não foi possível ler o JSON: " + err.message); }
+    };
+    fr.readAsText(file);
+  }
+  $("fileInput").addEventListener("change", function (e) { readFile(e.target.files[0]); e.target.value = ""; });
+  var drop = $("drop"), depth = 0;
+  window.addEventListener("dragenter", function (e) { e.preventDefault(); depth++; drop.classList.add("on"); });
+  window.addEventListener("dragleave", function () { if (--depth <= 0) { depth = 0; drop.classList.remove("on"); } });
+  window.addEventListener("dragover", function (e) { e.preventDefault(); });
+  window.addEventListener("drop", function (e) {
+    e.preventDefault(); depth = 0; drop.classList.remove("on");
+    readFile(e.dataTransfer.files && e.dataTransfer.files[0]);
+  });
+
+  $("downloadBtn").addEventListener("click", function () {
+    if (!state.report) return;
+    var blob = new Blob([JSON.stringify(state.report, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    var ts = (state.report.metadata && state.report.metadata.started_at || "").replace(/[-:]/g, "").replace("T", "_").slice(0, 15);
+    a.href = URL.createObjectURL(blob); a.download = "audit_report_" + (ts || "export") + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+  $("printBtn").addEventListener("click", function () { window.print(); });
+
+  var THEME_KEY = "macfleet-theme";
+  try { var saved = localStorage.getItem(THEME_KEY); if (saved) document.documentElement.setAttribute("data-theme", saved); } catch (e) {}
+  $("themeBtn").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    if (!cur) cur = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    var next = cur === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  });
+
+  document.querySelectorAll(".sidebar a").forEach(function (a) {
+    a.addEventListener("click", function () {
+      document.querySelectorAll(".sidebar a").forEach(function (x) { x.classList.remove("active"); });
+      a.classList.add("active");
+    });
+  });
+
+  // ----------------------------------------------------------------- boot
+  var embedded = null;
+  try { embedded = JSON.parse($("report-data").textContent.replace("/*__REPORT_DATA__*/", "")); } catch (e) { embedded = null; }
+  if (embedded) load(embedded);
+  else {
+    $("tbody").innerHTML = '<tr><td colspan="6" class="empty">Nenhum relatório embutido. Clique em “Carregar relatório” ou arraste um audit_report_*.json para esta página.</td></tr>';
+  }
+})();
+</script>
+</body>
+</html>
