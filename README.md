@@ -296,7 +296,7 @@ Projeto **educacional**, desenvolvido para fins acadêmicos. Antes de usar em am
 
 **Arthur Marques**: estudante de Segurança da Informação, com interesse em Infraestrutura de TI, IT Operations, segurança de endpoints e automação com Python.
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-conectar-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/<seu-perfil>)
+[![LinkedIn]([https://img.shields.io/badge/LinkedIn-conectar-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/<seu-perfil](https://www.linkedin.com/in/arthur-marques-2bb47322a/)>)
 
 Feedbacks e sugestões são bem-vindos. Abra uma *issue*! ⭐ Se o projeto te ajudou, deixe uma estrela.
 
