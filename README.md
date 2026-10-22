@@ -2,7 +2,6 @@
 
 # 🛡️ MacFleet Auditor
 
-<img width="1415" height="680" alt="Pasted Graphic 2" src="https://github.com/user-attachments/assets/3250396e-1203-44c3-a894-5e3ce21a6e0d" />
 **Auditoria local de segurança e saúde operacional para macOS, em Python.**
 
 Verifica os controles de hardening do Mac, compara o resultado com uma política de conformidade e gera evidências, prioridades de ação e um dashboard visual.
@@ -15,7 +14,8 @@ Verifica os controles de hardening do Mac, compara o resultado com uma política
 
 🎓 *Projeto acadêmico de Segurança da Informação*
 
-![Dashboard do MacFleet Auditor](docs/dashboard.png)
+<img width="1415" height="680" alt="Pasted Graphic 2" src="https://github.com/user-attachments/assets/fce17703-b493-4c4f-8144-4e06181dc78b" />
+
 
 </div>
 
